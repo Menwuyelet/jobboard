@@ -1,6 +1,6 @@
 from rest_framework import generics, viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .permissions import IsAdmin, IsOwnerOfInstance
+from .permissions import IsAdmin, IsSelf
 from .serializers import UserSerializer
 from .models import User
 
@@ -8,7 +8,7 @@ from .models import User
 class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     # permission_classes = [AllowAny]
-    permission_classes = [IsAuthenticated, IsOwnerOfInstance | IsAdmin]
+    permission_classes = [IsAuthenticated, IsSelf | IsAdmin]
     lookup_field = 'id'
 
     def get_queryset(self):
@@ -31,7 +31,7 @@ class UsertListView(generics.ListAPIView):
     serializer_class = UserSerializer
     # permission_classes = [AllowAny]
     permission_classes = [IsAuthenticated, IsAdmin]
-    queryset = User.objects.filter(role='user')
+    queryset = User.objects.filter(role='user').order_by('first_name')
 
 class UserVerifyView(generics.UpdateAPIView):
     serializer_class = UserSerializer
@@ -52,7 +52,7 @@ class AdminViewSets(viewsets.ModelViewSet):
     permission_classes = [IsAdmin]
     serializer_class = UserSerializer
     lookup_field = 'id'
-    queryset = User.objects.filter(role='admin')
+    queryset = User.objects.filter(role='admin').order_by('first_name')
 
     def perform_create(self, serializer):
         role = "admin"

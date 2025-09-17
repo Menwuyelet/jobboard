@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import path, include
-from .views import UserCreateView, UserRetrieveUpdateDestroyView, UsertListView, AdminViewSets
+from .views import UserCreateView, UserRetrieveUpdateDestroyView, UsertListView, AdminViewSets, UserVerifyView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.routers import DefaultRouter
 
@@ -31,5 +31,6 @@ urlpatterns = [
     path('users/<uuid:id>/retrieve/', UserRetrieveUpdateDestroyView.as_view(), name='retrieve_user'),
     path('users/list/', UsertListView.as_view(), name='list_users'),
 
+    path('admin/user/<uuid:id>/verify/', UserVerifyView.as_view(), name='verify_user'),
     path('admin/', include(router.urls)),
 ]

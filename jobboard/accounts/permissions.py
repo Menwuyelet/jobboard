@@ -7,3 +7,6 @@ class IsAdmin(BasePermission):
 class IsOwnerOfInstance(BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.user == request.user
+class IsSelf(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return obj == request.user

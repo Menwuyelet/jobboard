@@ -47,6 +47,9 @@ class JobSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        user = self.context['request'].user
+        if not getattr(user, "can_post_ajob", False):
+            raise serializers.ValidationError("You are not allowed to post a job.")
         job = Jobs.objects.create(**validated_data)
         return job
     

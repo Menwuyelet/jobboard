@@ -63,6 +63,7 @@ class JobSerializer(serializers.ModelSerializer):
     
 class ApplicationSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+    job = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Applications
         fields = ['id', 'job', 'user', 'status', 'resume', 'cover_letter', 'applied_at', 'updated_at']
@@ -76,8 +77,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
     
     @transaction.atomic
     def create(self, validated_data):
-        job = Jobs.objects.create(**validated_data)
-        return job
+        application = Applications.objects.create(**validated_data)
+        return application
     
     @transaction.atomic
     def update(self, instance, validated_data):
@@ -89,6 +90,19 @@ class ApplicationSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return  instance
+
+class JobApplicationStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Applications
+        fields = ['id', 'status']  
+        read_only_fields = ['id'] 
+
+    def validate_status(self, value):
+        allowed_statuses = ['Pending', 'Accepted', 'Rejected']
+        if value not in allowed_statuses:
+            raise serializers.ValidationError(f"Status must be one of {allowed_statuses}.")
+        return value
+
 
 class NotificationSerializer(serializers.ModelSerializer):
     application = serializers.PrimaryKeyRelatedField(read_only=True)

@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Jobs, Categories
+from .models import Jobs, Categories, Applications
 
 User = get_user_model()
 
@@ -64,6 +64,30 @@ class JobAPITests(TestCase):
         self.user_jobs_update_url = reverse("user-jobs-update", args=[self.job1.id])
         self.user_jobs_delete_url = reverse("user-jobs-delete", args=[self.job1.id])
         self.job_destroy_url = reverse("job-destroy", args=[self.job1.id])
+
+    ## applications
+        self.application1 = Applications.objects.create(
+            user=self.normal_user,
+            job=self.job1,
+            resume="Resume1",
+            cover_letter="Cover letter 1"
+        )
+        self.application2 = Applications.objects.create(
+            user=self.normal_user,
+            job=self.job2,
+            resume="Resume2",
+            cover_letter="Cover letter 2"
+        )
+
+        # urls
+        self.user_applications_list_url = reverse("user-applications-list")
+        self.user_application_create_url = reverse("user-applications-create", args=[self.job1.id])
+        self.user_application_retrieve_url = reverse("user-applications-retrieve", args=[self.application1.id])
+        self.user_application_update_url = reverse("user-applications-update", args=[self.application1.id])
+        self.user_application_delete_url = reverse("user-applications-delete", args=[self.application1.id])
+        self.job_applications_list_url = reverse("job-applications-list", args=[self.job1.id])
+        self.application_update_status_url = reverse("application-update-status", args=[self.application1.id])
+
 
     def authenticate(self, tokens):
         """Helper to authenticate client with JWT access token"""
@@ -166,3 +190,69 @@ class JobAPITests(TestCase):
         response = self.client.post(url, payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["name"], "Finance")
+
+    def test_user_can_list_their_applications(self):
+        self.authenticate(self.user_tokens)
+        response = self.client.get(self.user_applications_list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 2)
+
+    def test_user_can_create_application(self):
+        self.authenticate(self.user_tokens)
+        payload = {"resume": "New Resume", "cover_letter": "New Cover Letter"}
+        response = self.client.post(self.user_application_create_url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Applications.objects.filter(user=self.normal_user).count(), 3)
+
+    def test_user_can_retrieve_application(self):
+        self.authenticate(self.user_tokens)
+        response = self.client.get(self.user_application_retrieve_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["resume"], self.application1.resume)
+
+    def test_user_can_update_their_application(self):
+        self.authenticate(self.user_tokens)
+        payload = {"cover_letter": "Updated Cover Letter"}
+        response = self.client.patch(self.user_application_update_url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.application1.refresh_from_db()
+        self.assertEqual(self.application1.cover_letter, "Updated Cover Letter")
+
+    def test_user_can_delete_their_application(self):
+        self.authenticate(self.user_tokens)
+        response = self.client.delete(self.user_application_delete_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Applications.objects.filter(id=self.application1.id).exists())
+
+    # JobApplicationsListView Tests
+    def test_job_owner_can_list_applications_for_their_job(self):
+        self.authenticate(self.owner_tokens)
+        response = self.client.get(self.job_applications_list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)  # only application1 belongs to job1
+
+    def test_non_owner_cannot_list_applications_for_other_jobs(self):
+        self.authenticate(self.user_tokens)
+        response = self.client.get(self.job_applications_list_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    # JobApplicationStatusUpdateView Tests
+    def test_job_owner_can_update_application_status(self):
+        self.authenticate(self.owner_tokens)
+        payload = {"status": "accepted"}
+        response = self.client.patch(self.application_update_status_url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.application1.refresh_from_db()
+        self.assertEqual(self.application1.status, "accepted")
+
+    def test_non_owner_cannot_update_application_status(self):
+        self.authenticate(self.user_tokens)
+        payload = {"status": "accepted"}
+        response = self.client.patch(self.application_update_status_url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_status_field_is_required_on_update(self):
+        self.authenticate(self.owner_tokens)
+        response = self.client.patch(self.application_update_status_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Status field is required", str(response.data))

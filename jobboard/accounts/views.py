@@ -50,6 +50,7 @@ class UserVerifyView(generics.UpdateAPIView):
 
 class AdminViewSets(viewsets.ModelViewSet):
     permission_classes = [IsAdmin]
+    # permission_classes = [AllowAny]
     serializer_class = UserSerializer
     lookup_field = 'id'
     queryset = User.objects.filter(role='admin').order_by('first_name')

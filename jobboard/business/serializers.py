@@ -30,6 +30,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class JobSerializer(serializers.ModelSerializer):
     posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
     applications_count = serializers.IntegerField(source='applications.count', read_only=True)
     class Meta:
         model = Jobs

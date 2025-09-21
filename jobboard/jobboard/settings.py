@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'business.apps.BusinessConfig',
     ## background tasks
     'django_celery_results',
+    ##Swagger
+    'drf_spectacular',
 
 ]
 
@@ -152,6 +154,7 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.OrderingFilter',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -183,3 +186,12 @@ CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+
+
+## Swagger
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Job Board API',
+    'DESCRIPTION': 'API documentation for the Job Board project',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}

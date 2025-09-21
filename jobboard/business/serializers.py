@@ -105,21 +105,7 @@ class JobApplicationStatusSerializer(serializers.ModelSerializer):
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    application = serializers.PrimaryKeyRelatedField(read_only=True)
-    recipient = serializers.PrimaryKeyRelatedField(read_only=True)
-
     class Meta:
         model = Notifications
-        fields = ['id', 'application', 'recipient', 'message', 'is_read', 'created_at']
-        read_only_fields = ['id', 'created_at']
-
-    @transaction.atomic
-    def create(self, validated_data):
-        notification = Notifications.objects.create(**validated_data)
-        return notification
-    
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        instance.is_read = validated_data.get('is_read', instance.is_read)
-        instance.save()
-        return instance
+        fields = ["id", "application", "recipient", "message", "created_at","is_read"]
+        read_only_fields = ["id", "application", "recipient", "message", "created_at"]

@@ -1,9 +1,9 @@
 from django.shortcuts import render
-from .serializers import CategorySerializer, JobSerializer, ApplicationSerializer,JobApplicationStatusSerializer
+from .serializers import CategorySerializer, JobSerializer, ApplicationSerializer,JobApplicationStatusSerializer, NotificationSerializer
 from rest_framework import generics, viewsets,  status
-from accounts.permissions import IsAdmin, CanPost, IsOwnerOfApplication, IsJobOwner, IsJobOwnerOfApplication
+from accounts.permissions import IsAdmin, CanPost, IsOwnerOfApplication, IsJobOwner
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Categories, Jobs, Applications
+from .models import Categories, Jobs, Applications, Notifications
 from rest_framework.response import Response
 
 # Create your views here.
@@ -106,3 +106,39 @@ class JobApplicationStatusUpdateView(generics.UpdateAPIView):
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Notifications.objects.filter(recipient=self.request.user).order_by('is_read', '-created_at')
+
+
+class NotificationDetailView(generics.RetrieveAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        return Notifications.objects.filter(recipient=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Mark as read
+        if not instance.is_read:
+            instance.is_read = True
+            instance.save(update_fields=['is_read'])
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+class NotificationDestroyView(generics.DestroyAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        return Notifications.objects.filter(recipient=self.request.user)

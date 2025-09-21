@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import CategoryViewSet, JobReadOnlyViewSet, JobDestroyView, UserJobViewSet, UserApplicationViewSet, JobApplicationsListView, JobApplicationStatusUpdateView
+from .views import CategoryViewSet, JobReadOnlyViewSet, JobDestroyView, UserJobViewSet, UserApplicationViewSet, JobApplicationsListView, JobApplicationStatusUpdateView, NotificationListView, NotificationDetailView, NotificationDestroyView
 from rest_framework.routers import DefaultRouter
 
 
@@ -42,4 +42,8 @@ urlpatterns= [
     ## Job applications
     path("jobs/<uuid:job_id>/applications/", JobApplicationsListView.as_view(), name="job-applications-list"),
     path("applications/<uuid:id>/update-status/", JobApplicationStatusUpdateView.as_view(), name="application-update-status"),
+    ## Notifications
+    path("notifications/list", NotificationListView.as_view(), name='list-notifications'),
+    path("notifications/retrieve/<uuid:id>", NotificationDetailView.as_view(), name='retrieve-notification'),
+    path("notifications/delete/<uuid:id>", NotificationDestroyView.as_view(), name='delete-notification'),
 ]

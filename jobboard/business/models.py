@@ -28,17 +28,17 @@ class Jobs(models.Model):
         ('part-time', 'Part-Time')
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=100, blank=False, null=False)
-    description = models.TextField(blank=False, null=False)
+    title = models.CharField(max_length=100, blank=False, null=False, db_index=True)
+    description = models.TextField(blank=False, null=False, db_index=True)
     location =  models.CharField(max_length=100)
-    working_area = models.CharField(max_length=20, choices=WORKING_AREA_CHOICES)
-    longevity = models.CharField(max_length=15, choices=LONGEVITY_CHOICES)
-    type = models.CharField(max_length=15, choices=TYPE_CHOICES)
+    working_area = models.CharField(max_length=20, choices=WORKING_AREA_CHOICES, db_index=True)
+    longevity = models.CharField(max_length=15, choices=LONGEVITY_CHOICES, db_index=True)
+    type = models.CharField(max_length=15, choices=TYPE_CHOICES, db_index=True)
     category = models.ForeignKey(Categories, on_delete=models.SET_NULL, null=True, blank=True, related_name='jobs')
     posted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posted_jobs')
-    posted_at = models.DateTimeField(auto_now_add=True)
+    posted_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     
     def __str__(self):
         return f"{self.title} ({self.id})" 
@@ -52,7 +52,7 @@ class Applications(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     job = models.ForeignKey(Jobs, on_delete=models.CASCADE, related_name='applications')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_applications')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICE, default='pending')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICE, default='pending', db_index=True)
     resume = models.TextField(null=False, blank=False)
     cover_letter = models.TextField(null=False, blank=False)
     applied_at = models.DateTimeField(auto_now_add=True)

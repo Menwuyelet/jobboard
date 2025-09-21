@@ -24,7 +24,7 @@ class UserJobViewSet(viewsets.ModelViewSet):
 
     search_fields = ['title', 'description']
 
-    filterset_fields = ['category', 'is_active']
+    filterset_fields = ['category', 'is_active', 'working_area', 'longevity', 'type']
 
     def get_permissions(self):
         if self.action == "create":
@@ -56,12 +56,17 @@ class JobReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
 
         search_fields = ['title', 'description']
 
-        filterset_fields = ['category', 'is_active', 'posted_by']
+        filterset_fields = ['category', 'is_active', 'working_area', 'longevity', 'type']
 
 
 class UserApplicationViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationSerializer
     lookup_field = "id"
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+
+    search_fields = ['job', 'status']
+
+    filterset_fields = ['status',]
 
     def get_permissions(self):
         if self.action == "create":
@@ -124,7 +129,11 @@ class JobApplicationStatusUpdateView(generics.UpdateAPIView):
 class NotificationListView(generics.ListAPIView):
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
 
+    search_fields = ['application', 'message']
+
+    filterset_fields = ['is_read', 'application']
     def get_queryset(self):
         return Notifications.objects.filter(recipient=self.request.user).order_by('is_read', '-created_at')
 

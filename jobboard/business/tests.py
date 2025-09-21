@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Jobs, Categories, Applications
+from .models import Jobs, Categories, Applications, Notifications
 
 User = get_user_model()
 
@@ -87,6 +87,31 @@ class JobAPITests(TestCase):
         self.user_application_delete_url = reverse("user-applications-delete", args=[self.application1.id])
         self.job_applications_list_url = reverse("job-applications-list", args=[self.job1.id])
         self.application_update_status_url = reverse("application-update-status", args=[self.application1.id])
+
+    ## Notifications
+        self.application3 = Applications.objects.create(
+            user=self.normal_user,
+            job=self.job2,
+            resume="Resume3",
+            cover_letter="Cover letter 3"
+        )
+        self.notification1 = Notifications.objects.create(
+            application=self.application3, recipient=self.normal_user, message="Notification 1", is_read=False
+        )
+        self.notification2 = Notifications.objects.create(
+            application=self.application3, recipient=self.normal_user, message="Notification 2", is_read=True
+        )
+        self.notification3 = Notifications.objects.create(
+            application=self.application3, recipient=self.normal_user, message="Notification 3", is_read=False
+        )
+        self.notification_other_user = Notifications.objects.create(
+            application=self.application3, recipient=self.owner_user, message="Other User Notification", is_read=False
+        )
+
+        # urls
+        self.list_url = reverse("list-notifications")
+        self.retrieve_url = reverse("retrieve-notification", args=[self.notification1.id])
+        self.delete_url = reverse("delete-notification", args=[self.notification1.id])
 
 
     def authenticate(self, tokens):
@@ -195,14 +220,14 @@ class JobAPITests(TestCase):
         self.authenticate(self.user_tokens)
         response = self.client.get(self.user_applications_list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['count'], 2)
+        self.assertEqual(response.data['count'], 3)
 
     def test_user_can_create_application(self):
         self.authenticate(self.user_tokens)
         payload = {"resume": "New Resume", "cover_letter": "New Cover Letter"}
         response = self.client.post(self.user_application_create_url, payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Applications.objects.filter(user=self.normal_user).count(), 3)
+        self.assertEqual(Applications.objects.filter(user=self.normal_user).count(), 4)
 
     def test_user_can_retrieve_application(self):
         self.authenticate(self.user_tokens)
@@ -256,3 +281,48 @@ class JobAPITests(TestCase):
         response = self.client.patch(self.application_update_status_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("Status field is required", str(response.data))
+
+    # continue tessting
+    def test_user_can_list_their_notifications_ordered(self):
+        self.authenticate(self.user_tokens)
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Only notifications for self.user
+        self.assertEqual(response.data['count'], 3)
+        # Check ordering: unread first
+        self.assertFalse(response.data['results'][0]['is_read'])
+        self.assertFalse(response.data['results'][1]['is_read'])
+        self.assertTrue(response.data['results'][2]['is_read'])
+
+    # Retrieve Notification
+    def test_user_can_retrieve_and_mark_notification_as_read(self):
+        self.authenticate(self.user_tokens)
+        # Make sure notification1 is unread
+        self.assertFalse(self.notification1.is_read)
+        response = self.client.get(self.retrieve_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Notification should now be marked read
+        self.notification1.refresh_from_db()
+        self.assertTrue(self.notification1.is_read)
+        self.assertEqual(response.data["id"], str(self.notification1.id))
+
+    # Retrieve notification of another user should fail
+    def test_user_cannot_retrieve_others_notification(self):
+        self.authenticate(self.user_tokens)
+        url = reverse("retrieve-notification", args=[self.notification_other_user.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # Delete Notification
+    def test_user_can_delete_their_notification(self):
+        self.authenticate(self.user_tokens)
+        response = self.client.delete(self.delete_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Notifications.objects.filter(id=self.notification1.id).exists())
+
+    # Delete notification of another user should fail
+    def test_user_cannot_delete_others_notification(self):
+        self.authenticate(self.user_tokens)
+        url = reverse("delete-notification", args=[self.notification_other_user.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

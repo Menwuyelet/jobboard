@@ -4,6 +4,9 @@ from accounts.models import User
 # Create your models here.
 
 class Categories(models.Model):
+    """
+    Represents a job category/industry.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField()
@@ -14,6 +17,9 @@ class Categories(models.Model):
         return self.name
 
 class Jobs(models.Model):
+    """
+    Represents a job posting.
+    """
     WORKING_AREA_CHOICES = [
         ('onsite', 'Onsite'),
         ('remote', 'Remote'),
@@ -44,6 +50,9 @@ class Jobs(models.Model):
         return f"{self.title} ({self.id})" 
 
 class Applications(models.Model):
+    """
+    Represents a job application submitted by a user.
+    """
     STATUS_CHOICE = [
         ('pending', 'Pending'),
         ('accepted', 'Accepted'),
@@ -62,6 +71,10 @@ class Applications(models.Model):
         return f"{self.id} - {self.job} -> {self.user}"
     
 class Notifications(models.Model):
+    """
+    Represents notifications sent to users regarding their applications and 
+    job owners regarding their posted jobs.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     application = models.ForeignKey(Applications, on_delete=models.CASCADE, related_name='application')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')

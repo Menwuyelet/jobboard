@@ -3,7 +3,14 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 
 class CustomUserManager(BaseUserManager):
+    """
+    Custom manager for the User model to handle user and superuser creation.
+    Provides methods for creating regular users and superusers with proper validation.
+    """
     def create_user(self, email, username, password=None, **extra_fields):
+        """
+        Create and save a regular User with the given email, username, and password.
+        """
         if not email:
             raise ValueError('Users must have an email address')
         if not username:
@@ -15,6 +22,9 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, username, password=None, **extra_fields):
+        """
+        Create and save a Superuser with admin privileges.
+        """        
         extra_fields.setdefault('role', 'admin')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -22,6 +32,9 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    """
+    Custom User model extending AbstractBaseUser and PermissionsMixin.
+    """    
     ROLE_CHOICES = (
         ('admin', 'Admin'),
         ('user', 'User'),

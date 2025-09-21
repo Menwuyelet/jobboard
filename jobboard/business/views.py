@@ -7,18 +7,31 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Categories, Jobs, Applications, Notifications
 from rest_framework.response import Response
 
-
 # Create your views here.
 
 class CategoryViewSet(viewsets.ModelViewSet):
-        permission_classes = [IsAuthenticated, IsAdmin]
-        # permission_classes = [AllowAny]
-        serializer_class = CategorySerializer
-        lookup_field = 'id'
-        queryset = Categories.objects.all().prefetch_related('jobs')\
-                                           .order_by('created_at')
+    """
+    ViewSet for users to manage their own job postings.
+
+    Permissions:
+        - Create: Authenticated users with posting permissions.
+        - Update/Delete: Only the job owner can modify their jobs.
+    """
+    permission_classes = [IsAuthenticated, IsAdmin]
+    # permission_classes = [AllowAny]
+    serializer_class = CategorySerializer
+    lookup_field = 'id'
+    queryset = Categories.objects.all().prefetch_related('jobs')\
+                                        .order_by('created_at')
 
 class UserJobViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for users to manage their own job postings.
+
+    Permissions:
+        - Create: Authenticated users with posting permissions.
+        - Update/Delete: Only the job owner can modify their jobs.
+    """
     serializer_class = JobSerializer
     lookup_field = "id"
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -44,27 +57,40 @@ class UserJobViewSet(viewsets.ModelViewSet):
         serializer.save(posted_by=user, is_active=True)
 
 class JobDestroyView(generics.DestroyAPIView):
-        permission_classes = [IsAdmin]
-        # permission_classes = [AllowAny]
-        serializer_class = JobSerializer
-        lookup_field = 'id'
-        queryset = Jobs.objects.all()
+    """
+    API to delete any job posting (admin only).
+    """
+    permission_classes = [IsAdmin]
+    # permission_classes = [AllowAny]
+    serializer_class = JobSerializer
+    lookup_field = 'id'
+    queryset = Jobs.objects.all()
 
 class JobReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
-        permission_classes = [AllowAny]
-        serializer_class = JobSerializer
-        queryset = Jobs.objects.all().select_related('category', 'posted_by')\
-                                     .prefetch_related('applications')\
-                                     .order_by('-posted_at', '-is_active')
-        lookup_field = "id"
-        filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    """
+    Read-only viewset for all jobs available to the public.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = JobSerializer
+    queryset = Jobs.objects.all().select_related('category', 'posted_by')\
+                                    .prefetch_related('applications')\
+                                    .order_by('-posted_at', '-is_active')
+    lookup_field = "id"
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
 
-        search_fields = ['title', 'description']
+    search_fields = ['title', 'description']
 
-        filterset_fields = ['category', 'is_active', 'working_area', 'longevity', 'type']
+    filterset_fields = ['category', 'is_active', 'working_area', 'longevity', 'type']
 
 
 class UserApplicationViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for users to manage their own job applications.
+
+    Permissions:
+        - Create: Authenticated users.
+        - Update/Delete: Only the applicant can modify their application.
+    """
     serializer_class = ApplicationSerializer
     lookup_field = "id"
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -90,6 +116,9 @@ class UserApplicationViewSet(viewsets.ModelViewSet):
         serializer.save(user=user, job=job)
 
 class JobApplicationsListView(generics.ListAPIView):
+    """
+    List all applications for a specific job (job owner or admin only).
+    """
     serializer_class = ApplicationSerializer
     permission_classes = [IsAuthenticated, IsJobOwner | IsAdmin]
     # permission_classes = [AllowAny]
@@ -106,6 +135,9 @@ class JobApplicationsListView(generics.ListAPIView):
                                                    .order_by('-applied_at')
 
 class JobApplicationStatusUpdateView(generics.UpdateAPIView):
+    """
+    Update the status of an application (job owner only).
+    """
     serializer_class = JobApplicationStatusSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = "id"
@@ -134,6 +166,9 @@ class JobApplicationStatusUpdateView(generics.UpdateAPIView):
 
 
 class NotificationListView(generics.ListAPIView):
+    """
+    List notifications for the authenticated user.
+    """
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -147,6 +182,9 @@ class NotificationListView(generics.ListAPIView):
 
 
 class NotificationDetailView(generics.RetrieveAPIView):
+    """
+    Retrieve a single notification and mark it as read after wards.
+    """
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
@@ -166,6 +204,9 @@ class NotificationDetailView(generics.RetrieveAPIView):
         return Response(serializer.data)
 
 class NotificationDestroyView(generics.DestroyAPIView):
+    """
+    Delete a notification (recipient only).
+    """
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'

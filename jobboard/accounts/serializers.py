@@ -6,6 +6,14 @@ from django.contrib.auth.password_validation import validate_password
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the custom User model.
+
+    Handles user creation, update, and password validation.
+    - Password is write-only and validated for complexity.
+    - Role is read-only and cannot be modified via this serializer.
+    - Certain fields like can_post_ajob, jobs_posted, and number_of_hires are read-only.
+    """    
     password = serializers.CharField(required=True, write_only=True)
     role = serializers.CharField(read_only=True)
     class Meta:
@@ -13,17 +21,15 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name', 'can_post_ajob', 'jobs_posted', 'number_of_hires', 'gender', 'nationality', 'password']
         read_only_fields = ['id', 'can_post_ajob', 'jobs_posted', 'number_of_hires',]
 
-    # def validate_picture(self, value):
-    #     if value == None:
-    #         return value
-    #     max_size = 5 * 1024 * 1024  # 5MB
-    #     if value.content_type not in ['image/jpeg', 'image/png', 'image/gif']:
-    #         raise serializers.ValidationError("Only JPEG, PNG, and GIF images are allowed.")
-    #     if value.size > max_size:
-    #         raise serializers.ValidationError("Image size should not exceed 5MB.")
-    #     return value
-
     def validate_password(self, value):
+        """
+        Validate password complexity.
+
+        Ensures password contains:
+        - At least one letter
+        - At least one number
+        - At least one special character
+        """
         validate_password(value)
 
         if not re.search(r'[A-Za-z]', value):
@@ -38,6 +44,9 @@ class UserSerializer(serializers.ModelSerializer):
     
     @transaction.atomic
     def create(self, validated_data):
+        """
+        Create a new User instance.
+        """
         user_name = validated_data.pop('username')
         email = validated_data.pop('email')
         password = validated_data.pop('password')
@@ -59,6 +68,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        """
+        Update an existing User instance.
+        """
         user_name = validated_data.pop('username', None)
         email = validated_data.pop('email', None)
         password = validated_data.pop('password', None)

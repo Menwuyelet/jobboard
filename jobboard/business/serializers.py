@@ -3,7 +3,12 @@ from django.db import transaction
 from .models import Categories, Jobs, Applications, Notifications
 from accounts.models import User 
 
-class CategorySerializer(serializers.ModelSerializer):   
+class CategorySerializer(serializers.ModelSerializer):  
+    """
+    Serializer for the Categories model.
+
+    Includes a read-only field 'jobs_count' that counts the number of jobs in the category.
+    """ 
     jobs_count = serializers.IntegerField(source='jobs.count', read_only=True) 
     class Meta:
         model = Categories
@@ -11,6 +16,7 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate_name(self, value):
+        """Ensure category name is unique (case-insensitive)."""
         if Categories.objects.filter(name__iexact=value).exists():
             raise serializers.ValidationError("A category with this name already exists.")
         return value
@@ -29,6 +35,14 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Jobs model.
+
+    Read-only fields:
+        - posted_by
+        - is_active
+        - applications_count: counts the number of applications for the job
+    """
     posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
     is_active = serializers.BooleanField(read_only=True)
     applications_count = serializers.IntegerField(source='applications.count', read_only=True)
@@ -42,12 +56,14 @@ class JobSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'posted_at', 'updated_at']
 
     def validate(self, data):
+        """Ensure remote jobs do not include a physical location."""
         if data.get("working_area") == "remote" and data.get("location"):
             raise serializers.ValidationError("Remote jobs should not include a physical location.")
         return data
 
     @transaction.atomic
     def create(self, validated_data):
+        """Check if user can post a job before creating."""
         user = self.context['request'].user
         if not getattr(user, "can_post_ajob", False):
             raise serializers.ValidationError("You are not allowed to post a job.")
@@ -62,6 +78,9 @@ class JobSerializer(serializers.ModelSerializer):
         return instance
     
 class ApplicationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Applications model.
+    """
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     job = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
@@ -70,6 +89,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'status', 'applied_at', 'updated_at']
 
     def validate_job(self, job):
+        """Ensure the user has not already applied for this job."""
         user = self.context['request'].user
         if Applications.objects.filter(job=job, user=user).exists():
             raise serializers.ValidationError("You have already applied for this job.")
@@ -92,6 +112,12 @@ class ApplicationSerializer(serializers.ModelSerializer):
         return  instance
 
 class JobApplicationStatusSerializer(serializers.ModelSerializer):
+    """
+    Serializer to update only the status of a job application.
+
+    Methods:
+        - validate_status: Ensures status is one of 'Pending', 'Accepted', or 'Rejected'.
+    """
     class Meta:
         model = Applications
         fields = ['id', 'status']  
@@ -105,7 +131,14 @@ class JobApplicationStatusSerializer(serializers.ModelSerializer):
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Notifications model.
+    
+    All fields are read_only except is_read because 
+    creation of notification happens automatically.
+    """
     class Meta:
         model = Notifications
         fields = ["id", "application", "recipient", "message", "created_at","is_read"]
         read_only_fields = ["id", "application", "recipient", "message", "created_at"]
+        

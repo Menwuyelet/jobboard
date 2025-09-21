@@ -5,10 +5,26 @@ from .tasks import send_email_notification
 
 @receiver(post_save, sender=Applications)
 def create_notification_for_job_owner(sender, instance, created, **kwargs):
-    """Create a notification for the job owner when a new application is submitted."""
-    if created:  # only run when a new application is created
+    """
+    Signal to create notifications and send emails related to job applications.
+
+    Triggered whenever an Applications instance is saved.
+
+    Behavior:
+        - When a new application is created:
+            - Create an in-app notification for the job owner.
+        - When an existing application is updated:
+            - If status is "Accepted":
+                - Create in-app notification for the applicant.
+                - Send email to applicant about acceptance.
+                - Send email to job owner confirming acceptance.
+            - If status is "Rejected":
+                - Create in-app notification for the applicant.
+                - Send email to applicant about rejection.
+    """
+    if created:  
         Notifications.objects.create(
-            application=instance,  # pass the object, not just ID
+            application=instance,  
             recipient=instance.job.posted_by,
             message=f"{instance.user} applied to your job: {instance.job.title}",
         )
@@ -24,7 +40,7 @@ def create_notification_for_job_owner(sender, instance, created, **kwargs):
                     "Thank you!"
                 ),
             )
-            # Send email notification
+            # Send email notification for applicant
             send_email_notification.delay(
                 subject="Job Application Result",
                 message=(
@@ -34,9 +50,10 @@ def create_notification_for_job_owner(sender, instance, created, **kwargs):
                     "Please wait patiently for the job owner to contact you.\n\n"
                     "Thanks for choosing our platform!"
                 ),
-                # recipient_list=['menutemesgen@gmail.com',],
                 recipient_list=[instance.user.email] if instance.user.email else [],
             )
+
+            # Send email notification for job owner
             send_email_notification.delay(
                     subject=f"You accepted the application of {getattr(instance.user, 'username', instance.user)} for the your job {instance.job} post.",
                     message=(
@@ -54,7 +71,6 @@ def create_notification_for_job_owner(sender, instance, created, **kwargs):
                 )
             
         elif instance.status == "Rejected":
-            # Create in-app notification
             Notifications.objects.create(
                 application=instance,
                 recipient=instance.user,
@@ -64,8 +80,8 @@ def create_notification_for_job_owner(sender, instance, created, **kwargs):
                     "Thank you for using our platform!"
                 ),
             )
-            print('notfic')
-            # Send rejection email
+            
+            # Send rejection email for applicant
             send_email_notification.delay(
                 subject="Job Application Result: Rejected",
                 message=(
@@ -75,6 +91,6 @@ def create_notification_for_job_owner(sender, instance, created, **kwargs):
                     "We encourage you to explore other opportunities on our platform.\n\n"
                     "Thank you for using our platform!"
                 ),
-                # recipient_list=['menutemesgen@gmail.com',],
+
                 recipient_list=[instance.user.email] if instance.user.email else [],
             ) 

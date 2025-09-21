@@ -15,7 +15,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
         # permission_classes = [AllowAny]
         serializer_class = CategorySerializer
         lookup_field = 'id'
-        queryset = Categories.objects.all().order_by('created_at')
+        queryset = Categories.objects.all().prefetch_related('jobs')\
+                                           .order_by('created_at')
 
 class UserJobViewSet(viewsets.ModelViewSet):
     serializer_class = JobSerializer
@@ -34,7 +35,9 @@ class UserJobViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Jobs.objects.filter(posted_by=user).order_by('-posted_at', '-is_active')
+        return Jobs.objects.filter(posted_by=user).select_related('category')\
+                                                  .prefetch_related('applications')\
+                                                  .order_by('-posted_at', '-is_active')
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -50,7 +53,9 @@ class JobDestroyView(generics.DestroyAPIView):
 class JobReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
         permission_classes = [AllowAny]
         serializer_class = JobSerializer
-        queryset = Jobs.objects.all().order_by('-posted_at', '-is_active')
+        queryset = Jobs.objects.all().select_related('category', 'posted_by')\
+                                     .prefetch_related('applications')\
+                                     .order_by('-posted_at', '-is_active')
         lookup_field = "id"
         filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
 
@@ -76,7 +81,8 @@ class UserApplicationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Applications.objects.filter(user=user).order_by('-applied_at')
+        return Applications.objects.filter(user=user).prefetch_related('job')\
+                                                     .order_by('-applied_at')
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -96,7 +102,8 @@ class JobApplicationsListView(generics.ListAPIView):
         # Check permission
         self.check_object_permissions(self.request, job)
 
-        return Applications.objects.filter(job=job).order_by('-applied_at')
+        return Applications.objects.filter(job=job).prefetch_related('user')\
+                                                   .order_by('-applied_at')
 
 class JobApplicationStatusUpdateView(generics.UpdateAPIView):
     serializer_class = JobApplicationStatusSerializer
@@ -135,7 +142,8 @@ class NotificationListView(generics.ListAPIView):
 
     filterset_fields = ['is_read', 'application']
     def get_queryset(self):
-        return Notifications.objects.filter(recipient=self.request.user).order_by('is_read', '-created_at')
+        return Notifications.objects.filter(recipient=self.request.user).prefetch_related('application')\
+                                                                        .order_by('is_read', '-created_at')
 
 
 class NotificationDetailView(generics.RetrieveAPIView):

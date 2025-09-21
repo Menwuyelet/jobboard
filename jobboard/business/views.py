@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from .serializers import CategorySerializer, JobSerializer, ApplicationSerializer,JobApplicationStatusSerializer, NotificationSerializer
-from rest_framework import generics, viewsets,  status
+from rest_framework import generics, viewsets,  status, filters
+from django_filters.rest_framework import DjangoFilterBackend
 from accounts.permissions import IsAdmin, CanPost, IsOwnerOfApplication, IsJobOwner
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Categories, Jobs, Applications, Notifications
 from rest_framework.response import Response
+
 
 # Create your views here.
 
@@ -18,6 +20,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class UserJobViewSet(viewsets.ModelViewSet):
     serializer_class = JobSerializer
     lookup_field = "id"
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+
+    search_fields = ['title', 'description']
+
+    filterset_fields = ['category', 'is_active']
 
     def get_permissions(self):
         if self.action == "create":
@@ -27,7 +34,7 @@ class UserJobViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Jobs.objects.filter(posted_by=user).order_by('posted_at', 'is_active')
+        return Jobs.objects.filter(posted_by=user).order_by('-posted_at', '-is_active')
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -43,8 +50,14 @@ class JobDestroyView(generics.DestroyAPIView):
 class JobReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
         permission_classes = [AllowAny]
         serializer_class = JobSerializer
-        queryset = Jobs.objects.all().order_by('posted_at', 'is_active')
+        queryset = Jobs.objects.all().order_by('-posted_at', '-is_active')
         lookup_field = "id"
+        filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+
+        search_fields = ['title', 'description']
+
+        filterset_fields = ['category', 'is_active', 'posted_by']
+
 
 class UserApplicationViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationSerializer
@@ -58,7 +71,7 @@ class UserApplicationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Applications.objects.filter(user=user).order_by('applied_at')
+        return Applications.objects.filter(user=user).order_by('-applied_at')
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -78,7 +91,7 @@ class JobApplicationsListView(generics.ListAPIView):
         # Check permission
         self.check_object_permissions(self.request, job)
 
-        return Applications.objects.filter(job=job).order_by('applied_at')
+        return Applications.objects.filter(job=job).order_by('-applied_at')
 
 class JobApplicationStatusUpdateView(generics.UpdateAPIView):
     serializer_class = JobApplicationStatusSerializer

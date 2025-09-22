@@ -12,14 +12,23 @@ class UserSerializer(serializers.ModelSerializer):
     Handles user creation, update, and password validation.
     - Password is write-only and validated for complexity.
     - Role is read-only and cannot be modified via this serializer.
-    - Certain fields like can_post_ajob, jobs_posted, and number_of_hires are read-only.
-    """    
+    - Certain fields like can_post_ajob, jobs_posted,
+      and number_of_hires are read-only.
+    """
     password = serializers.CharField(required=True, write_only=True)
     role = serializers.CharField(read_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name', 'can_post_ajob', 'jobs_posted', 'number_of_hires', 'gender', 'nationality', 'password']
-        read_only_fields = ['id', 'can_post_ajob', 'jobs_posted', 'number_of_hires',]
+        fields = [
+                    'id', 'username', 'email', 'role', 'first_name',
+                    'last_name', 'can_post_ajob', 'jobs_posted',
+                    'number_of_hires', 'gender', 'nationality', 'password'
+                ]
+        read_only_fields = [
+                                'id', 'can_post_ajob', 'jobs_posted',
+                                'number_of_hires',
+                            ]
 
     def validate_password(self, value):
         """
@@ -41,7 +50,6 @@ class UserSerializer(serializers.ModelSerializer):
 
         return value
 
-    
     @transaction.atomic
     def create(self, validated_data):
         """
@@ -54,17 +62,16 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Email must be provided.")
         if User.objects.filter(email=email).exists():
             raise serializers.ValidationError("Email must be unique. choose another one.")
-        
+
         if not user_name:
             raise serializers.ValidationError("user Name must be provided.")
         if User.objects.filter(username=user_name).exists():
             raise serializers.ValidationError("User name must be unique. choose another one.")
-        
+
         user = User.objects.create(email=email, username=user_name, **validated_data)
         user.set_password(password)
         user.save()
         return user
-
 
     @transaction.atomic
     def update(self, instance, validated_data):
@@ -82,7 +89,6 @@ class UserSerializer(serializers.ModelSerializer):
 
         if password:
             instance.set_password(password)
-
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)

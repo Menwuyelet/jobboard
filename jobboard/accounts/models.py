@@ -1,15 +1,22 @@
 import uuid
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import (
+                                        AbstractBaseUser,
+                                        BaseUserManager,
+                                        PermissionsMixin
+                                       )
 from django.db import models
+
 
 class CustomUserManager(BaseUserManager):
     """
     Custom manager for the User model to handle user and superuser creation.
-    Provides methods for creating regular users and superusers with proper validation.
+    Provides methods for creating regular users and superusers with proper
+    validation.
     """
     def create_user(self, email, username, password=None, **extra_fields):
         """
-        Create and save a regular User with the given email, username, and password.
+        Create and save a regular User with the given email, username,
+        and password.
         """
         if not email:
             raise ValueError('Users must have an email address')
@@ -24,7 +31,7 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self, email, username, password=None, **extra_fields):
         """
         Create and save a Superuser with admin privileges.
-        """        
+        """
         extra_fields.setdefault('role', 'admin')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -34,7 +41,7 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     """
     Custom User model extending AbstractBaseUser and PermissionsMixin.
-    """    
+    """
     ROLE_CHOICES = (
         ('admin', 'Admin'),
         ('user', 'User'),
@@ -51,10 +58,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
-    nationality = models.CharField(max_length=20, null=True, blank=True)
+    nationality = models.CharField(max_length=50, null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
-    
-    ## job posting related
+
+    # job posting related
     can_post_ajob = models.BooleanField(default=False)
     jobs_posted = models.IntegerField(default=0)
     number_of_hires = models.IntegerField(default=0)

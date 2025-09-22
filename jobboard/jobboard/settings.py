@@ -81,24 +81,24 @@ WSGI_APPLICATION = 'jobboard.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'jobboarddb1',
+        'USER': 'jobboardadmin',
+        'PASSWORD': 'jobboard@Pd',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'jobboarddb',           # your manually created database name
-#         'USER': 'nafiad',       # your Postgres user
-#         'PASSWORD': 'nafiad@postGres', # password for that user
-#         'HOST': 'localhost',      # 'localhost' if on same machine
-#         'PORT': '5432',           # default Postgres port
-#     }
-# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

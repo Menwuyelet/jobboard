@@ -30,6 +30,7 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         """Delete the user instance."""
         instance.delete()
 
+
 class UserCreateView(generics.CreateAPIView):
     """
     API view to create a new regular user.
@@ -44,6 +45,7 @@ class UserCreateView(generics.CreateAPIView):
         """Assign 'user' role when creating a new user."""
         serializer.save(role='user')
 
+
 class UsertListView(generics.ListAPIView):
     """
     API view to list all regular users.
@@ -55,6 +57,7 @@ class UsertListView(generics.ListAPIView):
     # permission_classes = [AllowAny]
     permission_classes = [IsAuthenticated, IsAdmin]
     queryset = User.objects.filter(role='user').order_by('first_name')
+
 
 class UserVerifyView(generics.UpdateAPIView):
     """
@@ -69,13 +72,14 @@ class UserVerifyView(generics.UpdateAPIView):
 
     def get_queryset(self):
         return User.objects.filter(role='user')
-    
+
     def perform_update(self, serializer):
-        user = serializer.instance 
+        user = serializer.instance
         if not user.can_post_ajob:
             serializer.save(can_post_ajob=True)
         else:
             serializer.save(can_post_ajob=False)
+
 
 class AdminViewSets(viewsets.ModelViewSet):
     """
@@ -93,6 +97,6 @@ class AdminViewSets(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         role = "admin"
         serializer.save(role=role, can_post_ajob=True)
-    
+
     def perform_destroy(self, instance):
         instance.delete()

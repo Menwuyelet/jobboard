@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='gender',
-            field=models.CharField(choices=[('admin', 'Admin'), ('user', 'User')], default=django.utils.timezone.now, max_length=10),
+            field=models.CharField(choices=[('admin', 'Admin'), ('user', 'User')], default='user', max_length=10),
             preserve_default=False,
         ),
         migrations.AddField(

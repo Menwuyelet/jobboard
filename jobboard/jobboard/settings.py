@@ -24,15 +24,16 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 # SECURITY
 SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
-# DATABASE
+
+## edit the fields below to setup ur own db
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ.get('DB_NAME'),
-#         'USER': os.environ.get('DB_USER'),
-#         'PASSWORD': os.environ.get('DB_PASSWORD'),
-#         'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-#         'PORT': os.environ.get('DB_PORT', '5432'),
+#     'ENGINE': 'django.db.backends.postgresql',
+#     'NAME': 'your_db_name',
+#     'USER': 'your_db_user',
+#     'PASSWORD': 'your_db_password',
+#     'HOST': 'your_db_host',
+#     'PORT': 'your_db_port',
 #     }
 # }
 

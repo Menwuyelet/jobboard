@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+from .models import VerificationRequest
 
 User = get_user_model()
 
@@ -141,3 +142,70 @@ class UserAPITests(TestCase):
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(User.objects.filter(id=self.admin_user.id).exists())
+
+    def test_user_can_create_verification_request(self):
+        self.authenticate(self.owner_tokens)
+        url = reverse("verification-requests-list")
+        payload = {"reason": "I want to verify my account"}
+        response = self.client.post(url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(VerificationRequest.objects.count(), 1)
+        vr = VerificationRequest.objects.first()
+        self.assertEqual(vr.user, self.owner_user)
+        self.assertEqual(vr.status, "pending")
+
+    def test_user_cannot_create_multiple_pending_requests(self):
+        self.authenticate(self.user_tokens)
+        url = reverse("verification-requests-list")
+        self.client.post(url, {"reason": "first request"}, format="json")
+        response = self.client.post(url, {"reason": "second request"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("pending", response.data["detail"].lower())
+
+    def test_admin_can_list_all_requests(self):
+        # create request as normal user
+        VerificationRequest.objects.create(user=self.normal_user, reason="verify me")
+        self.authenticate(self.admin_tokens)
+        url = reverse("verification-requests-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 1)
+
+    def test_user_can_only_see_their_own_requests(self):
+        VerificationRequest.objects.create(user=self.normal_user, reason="user req")
+        VerificationRequest.objects.create(user=self.owner_user, reason="owner req")
+
+        self.authenticate(self.user_tokens)
+        url = reverse("verification-requests-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # should only return requests belonging to normal_user
+        for req in response.data['results']:
+            self.assertEqual(req["user"], self.normal_user.id)
+
+    def test_admin_can_approve_request(self):
+        req = VerificationRequest.objects.create(user=self.normal_user, reason="please verify")
+        self.authenticate(self.admin_tokens)
+        url = reverse("verification-requests-detail", args=[req.id])
+        response = self.client.patch(url, {"status": "approved"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        req.refresh_from_db()
+        self.assertEqual(req.status, "approved")
+
+    def test_non_admin_cannot_update_request_status(self):
+        req = VerificationRequest.objects.create(user=self.owner_user, reason="need verify")
+        self.authenticate(self.owner_tokens)
+        url = reverse("verification-requests-detail", args=[req.id])
+        response = self.client.patch(url, {"status": "approved"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        req.refresh_from_db()
+        self.assertEqual(req.status, "pending")
+
+    def test_invalid_status_rejected(self):
+        req = VerificationRequest.objects.create(user=self.owner_user, reason="invalid test")
+        self.authenticate(self.admin_tokens)
+        url = reverse("verification-requests-detail", args=[req.id])
+        response = self.client.patch(url, {"status": "wrongstatus"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        req.refresh_from_db()
+        self.assertEqual(req.status, "pending")

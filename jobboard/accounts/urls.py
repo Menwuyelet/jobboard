@@ -1,6 +1,13 @@
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import path, include
-from .views import UserCreateView, UserRetrieveUpdateDestroyView, UsertListView, AdminViewSets, UserVerifyView
+from .views import (
+                        UserCreateView,
+                        UserRetrieveUpdateDestroyView,
+                        UsertListView,
+                        AdminViewSets,
+                        UserVerifyView,
+                        VerificationRequestViewSet
+                    )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.routers import DefaultRouter
 
@@ -21,7 +28,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 router = DefaultRouter()
 router.register(r'admins', AdminViewSets, basename='admins')
-
+router.register(r"verification-requests", VerificationRequestViewSet, basename="verification-requests")
 
 urlpatterns = [
     path('users/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -32,5 +39,5 @@ urlpatterns = [
     path('users/list/', UsertListView.as_view(), name='list_users'),
 
     path('admin/user/<uuid:id>/verify/', UserVerifyView.as_view(), name='verify_user'),
-    path('admin/', include(router.urls)),
+    path('', include(router.urls)),
 ]

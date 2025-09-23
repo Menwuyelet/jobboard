@@ -76,7 +76,7 @@ class Notifications(models.Model):
     job owners regarding their posted jobs.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    application = models.ForeignKey(Applications, on_delete=models.CASCADE, related_name='application')
+    application = models.ForeignKey(Applications, on_delete=models.CASCADE, null=True, blank=True, related_name='application')
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     message = models.TextField()
     is_read = models.BooleanField(default=False)

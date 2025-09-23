@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, VerificationRequest
 from django.db import transaction
 import re
 from django.contrib.auth.password_validation import validate_password
@@ -95,3 +95,12 @@ class UserSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+class VerificationRequestSerializer(serializers.ModelSerializer):
+    """
+    creates notification for admin about verification request.
+    """
+    class Meta:
+        model = VerificationRequest
+        fields = ["id", "user", "reason", "status", "created_at"]
+        read_only_fields = ["id", "user", "status", "created_at"]

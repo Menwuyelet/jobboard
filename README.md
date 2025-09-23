@@ -69,7 +69,7 @@
    pip install --upgrade pip
    pip install -r requirements.txt
    ```
-4. Configure db(optional if u want to use ur own)
+4. Configure db:
    - in jobboard/settings.py:
    ```bash
       DATABASES = {
@@ -103,7 +103,7 @@
    ```bash
    docker build -t jobboard .
    ```
-3. Run the container(without db setup):
+3. Run the container:
    ```bash
    docker run -p 8000:8000 jobboard
    ```

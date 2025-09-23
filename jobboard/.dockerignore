@@ -2,10 +2,7 @@ __pycache__
 *.pyc
 *.pyo
 *.pyd
-.env
 venv
 .git
 staticfiles
 .gitignore
-
- Dockerized

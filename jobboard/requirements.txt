@@ -1,0 +1,10 @@
+dj_database_url==3.0.1
+Django==5.2.6
+djangorestframework==3.16.0
+djangorestframework_simplejwt==5.5.0
+drf_spectacular==0.28.0
+python-dotenv==1.1.1
+celery==5.5.3
+django_celery_results==2.6.0
+django-filter==25.1
+psycopg2-binary==2.9.10

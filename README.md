@@ -118,6 +118,13 @@
    - To verify user use the user verification url to send request to Admin user after authentication.
    - After successful Verification a user can post jobs and manage applications to that job using the endpoints provided.
 
+### Admin cred:
+   ```bash
+   email: admin@gmail.com
+   PW: admin@21
+   ```
+
+
 **Note** - Use the ```api/docs``` url or click the link on landing page to access the extensive API doc.
 
 ### For questions or feedback, contact: *Mnu Temesgen* at *menutemesgen@gmail.com*

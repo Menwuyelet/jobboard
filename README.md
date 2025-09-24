@@ -86,13 +86,16 @@
    ```bash
    python manage.py migrate
    python manage.py runserver
+   celery -A jobboard worker -l info
    ```
+   **Note** - To setup own db, celery worker, and email provider edit the settings.py and follow the same instruction or add .env file with all variables.
 5. Open in your browser: http://localhost:8000
 
-## Docker Setup(Recommended)
+### Docker Setup(Recommended)
 **Prerequisites**:
    - Docker
    - Docker Compose
+   - .env file with your database and environment variables(or hard code them in settings.py)
 
 1. Clone the repository:
    ```bash
@@ -101,13 +104,14 @@
    ```
 2. Build the Docker image:
    ```bash
-   docker build -t jobboard .
+   docker-compose build
    ```
 3. Run the container:
    ```bash
-   docker run -p 8000:8000 jobboard
+   docker-compose up
+   docker-compose exec web python manage.py migrate (for migrating db after containers are up)
    ```
-   **Note** - To setup own db edit the settings.py and follow the same instruction
+   **Note** - To setup own db, celery worker, and email provider edit the settings.py and follow the same instruction or add .env file with all variables.
 4. Access the app: http://localhost:8000
 
 ## User Interaction Guide

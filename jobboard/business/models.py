@@ -36,7 +36,7 @@ class Jobs(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100, blank=False, null=False, db_index=True)
     description = models.TextField(blank=False, null=False, db_index=True)
-    location =  models.CharField(max_length=100)
+    location =  models.CharField(max_length=100, blank=True, null=True)
     working_area = models.CharField(max_length=20, choices=WORKING_AREA_CHOICES, db_index=True)
     longevity = models.CharField(max_length=15, choices=LONGEVITY_CHOICES, db_index=True)
     type = models.CharField(max_length=15, choices=TYPE_CHOICES, db_index=True)

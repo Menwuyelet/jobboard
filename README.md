@@ -104,12 +104,12 @@
    ```
 2. Build the Docker image:
    ```bash
-   docker-compose build
+   docker compose build
    ```
 3. Run the container:
    ```bash
-   docker-compose up
-   docker-compose exec web python manage.py migrate (for migrating db after containers are up)
+   docker compose up
+   docker compose exec web python manage.py migrate (for migrating db after containers are up)
    ```
    **Note** - To setup own db, celery worker, and email provider edit the settings.py and follow the same instruction or add .env file with all variables.
 4. Access the app: http://localhost:8000
